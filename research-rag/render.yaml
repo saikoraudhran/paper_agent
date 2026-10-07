@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: research-rag
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 2
+    disk:
+      name: rag-data
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: ADMIN_PIN
+        sync: false
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: SECRET_KEY
+        sync: false
+      - key: DATA_PATH
+        value: /data
+      - key: PORT
+        value: 8000
+

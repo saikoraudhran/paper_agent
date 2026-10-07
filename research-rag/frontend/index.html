@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResearchAI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-sidebar:       #1a1a2e;
+  --bg-sidebar-hover: #16213e;
+  --bg-chat:          #f8f9fa;
+  --bg-message-user:  #e8f4fd;
+  --bg-message-ai:    #ffffff;
+  --bg-thinking:      #f0f4ff;
+  --bg-citation:      #f6f8fa;
+  --bg-input:         #ffffff;
+  --accent:           #2563eb;
+  --accent-hover:     #1d4ed8;
+  --accent-light:     #dbeafe;
+  --text-primary:     #1a1a2e;
+  --text-secondary:   #64748b;
+  --text-muted:       #94a3b8;
+  --text-sidebar:     #e2e8f0;
+  --text-citation:    #475569;
+  --border:           #e2e8f0;
+  --border-citation:  #cbd5e1;
+  --success:          #10b981;
+  --error:            #ef4444;
+  --warning:          #f59e0b;
+  --font-main:        'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:        'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  --sidebar-width:    280px;
+  --max-chat-width:   760px;
+  --radius:           12px;
+  --radius-sm:        8px;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg-chat);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ── Login Screen ── */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.login-card {
+  background: white;
+  border-radius: 20px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo .icon { font-size: 48px; margin-bottom: 12px; display: block; }
+.login-logo h1 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+.login-logo p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: var(--font-main);
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.form-group input:focus { border-color: var(--accent); }
+.form-group input[type="password"] { letter-spacing: 4px; font-size: 20px; }
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 8px;
+}
+
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:active { transform: scale(0.99); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.login-error {
+  color: var(--error);
+  font-size: 13px;
+  text-align: center;
+  margin-top: 12px;
+  display: none;
+}
+
+/* ── Main App Layout ── */
+#app {
+  display: none;
+  height: 100vh;
+  flex-direction: row;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-header h2 {
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-header p {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.sidebar-section {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+/* Upload button */
+.btn-upload {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(37,99,235,0.2);
+  border: 1px dashed rgba(37,99,235,0.5);
+  border-radius: var(--radius-sm);
+  color: #93c5fd;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-upload:hover {
+  background: rgba(37,99,235,0.3);
+  border-color: rgba(37,99,235,0.8);
+}
+
+/* Paper list */
+.papers-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.paper-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 0;
+}
+
+.paper-item:hover { background: var(--bg-sidebar-hover); }
+
+.paper-toggle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.paper-toggle.active {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.paper-name {
+  font-size: 12px;
+  color: var(--text-sidebar);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paper-delete {
+  opacity: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  background: none;
+  border: none;
+}
+
+.paper-item:hover .paper-delete { opacity: 1; }
+.paper-delete:hover { color: var(--error); background: rgba(239,68,68,0.1); }
+
+/* Mode selector */
+.mode-list { display: flex; flex-direction: column; gap: 4px; }
+
+.mode-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+  color: var(--text-sidebar);
+  font-size: 13px;
+}
+
+.mode-item:hover { background: rgba(255,255,255,0.06); }
+.mode-item.active { background: rgba(37,99,235,0.25); color: #93c5fd; }
+.mode-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* Sidebar footer */
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+
+.user-name {
+  font-size: 13px;
+  color: var(--text-sidebar);
+  font-weight: 500;
+}
+
+.user-role {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.btn-logout {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s;
+}
+
+.btn-logout:hover { color: var(--error); background: rgba(239,68,68,0.1); }
+
+/* ── Chat Area ── */
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chat-header-left h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.chat-header-left p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.chat-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-action {
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: white;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* Messages area */
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.messages-area::-webkit-scrollbar { width: 6px; }
+.messages-area::-webkit-scrollbar-track { background: transparent; }
+.messages-area::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* Welcome screen */
+.welcome {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.welcome-icon { font-size: 56px; margin-bottom: 16px; display: block; }
+.welcome h3 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+.welcome p { font-size: 14px; max-width: 440px; margin: 0 auto; line-height: 1.6; }
+
+/* User message */
+.message-user {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.message-user-bubble {
+  max-width: 70%;
+  background: var(--bg-message-user);
+  border: 1px solid #bfdbfe;
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 16px;
+}
+
+.message-user-bubble p { color: var(--text-primary); line-height: 1.6; }
+.message-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* AI message */
+.message-ai {
+  display: flex;
+  gap: 12px;
+  max-width: var(--max-chat-width);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.ai-avatar {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.ai-content { flex: 1; min-width: 0; }
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ai-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ai-mode-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.ai-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* Thinking panel */
+.thinking-panel {
+  background: var(--bg-thinking);
+  border: 1px solid #c7d2fe;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.thinking-header {
+  padding: 8px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.thinking-header:hover { background: rgba(99,102,241,0.08); }
+
+.thinking-toggle { font-size: 10px; transition: transform 0.2s; }
+.thinking-toggle.open { transform: rotate(90deg); }
+
+.thinking-pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #6366f1;
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.thinking-body {
+  display: none;
+  padding: 0 14px 14px;
+  font-size: 13px;
+  color: #4338ca;
+  font-style: italic;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  font-family: var(--font-main);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.thinking-body.open { display: block; }
+
+/* Answer body — markdown rendering */
+.answer-body {
+  color: var(--text-primary);
+  line-height: 1.8;
+  font-size: 15px;
+}
+
+.answer-body h1, .answer-body h2, .answer-body h3 {
+  margin: 20px 0 8px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.answer-body h1 { font-size: 20px; }
+.answer-body h2 { font-size: 17px; }
+.answer-body h3 { font-size: 15px; color: var(--text-secondary); }
+
+.answer-body p { margin: 8px 0; }
+
+.answer-body ul, .answer-body ol {
+  margin: 8px 0 8px 20px;
+}
+
+.answer-body li { margin: 4px 0; }
+
+.answer-body strong { font-weight: 700; }
+.answer-body em { font-style: italic; color: var(--text-secondary); }
+
+.answer-body code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: #e11d48;
+}
+
+.answer-body pre {
+  background: #1e293b;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  overflow-x: auto;
+  margin: 12px 0;
+  position: relative;
+}
+
+.answer-body pre code {
+  background: none;
+  border: none;
+  color: #e2e8f0;
+  padding: 0;
+  font-size: 13px;
+}
+
+.answer-body blockquote {
+  border-left: 4px solid var(--accent);
+  padding: 8px 16px;
+  margin: 12px 0;
+  background: var(--accent-light);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.answer-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.answer-body th {
+  background: #f1f5f9;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+
+.answer-body td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.answer-body tr:nth-child(even) td { background: #fafafa; }
+
+.answer-body hr {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 20px 0;
+}
+
+.inline-citation {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0 2px;
+  letter-spacing: 0.2px;
+}
+
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 0;
+  margin: 12px 0;
+}
+
+/* Citations block */
+.citations-block {
+  background: var(--bg-citation);
+  border: 1px solid var(--border-citation);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-top: 16px;
+}
+
+.citations-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.citation-item {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-citation);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.citation-item:last-child { border-bottom: none; }
+
+/* Message actions */
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message-ai:hover .message-actions { opacity: 1; }
+
+.btn-msg-action {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: white;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-msg-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Continue button */
+.continue-block {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.continue-text {
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.btn-continue {
+  padding: 8px 20px;
+  background: var(--warning);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-continue:hover { background: #d97706; }
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 12px;
+  max-width: var(--max-chat-width);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+}
+
+.typing-dots span {
+  width: 8px;
+  height: 8px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: bounce 1.2s infinite;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Streaming cursor */
+.stream-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--text-primary);
+  margin-left: 2px;
+  animation: blink 0.8s infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Input Area ── */
+.input-area {
+  padding: 16px 24px 20px;
+  background: white;
+  border-top: 1px solid var(--border);
+}
+
+.input-wrapper {
+  max-width: var(--max-chat-width);
+  margin: 0 auto;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 8px 8px 16px;
+  transition: border-color 0.2s;
+}
+
+.input-wrapper:focus-within { border-color: var(--accent); }
+
+#chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  font-family: var(--font-main);
+  resize: none;
+  min-height: 24px;
+  max-height: 150px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+#chat-input::placeholder { color: var(--text-muted); }
+
+.btn-send {
+  width: 40px;
+  height: 40px;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-send:hover { background: var(--accent-hover); }
+.btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.input-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* ── Toast Notifications ── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.toast.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.toast.warning { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+.toast.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+@keyframes slideIn {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* ── Upload Progress ── */
+.upload-progress {
+  padding: 8px 16px;
+  display: none;
+}
+
+.progress-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.progress-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Admin Panel ── */
+.admin-section { display: none; }
+.admin-section.visible { display: block; }
+
+.btn-reingest {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: var(--radius-sm);
+  color: #fcd34d;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: all 0.15s;
+}
+
+.btn-reingest:hover { background: rgba(245,158,11,0.25); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    z-index: 100;
+    transition: left 0.3s;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+  }
+  .sidebar.open { left: 0; }
+  .chat-area { width: 100%; }
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 18px;
+  }
+}
+
+.mobile-menu-btn { display: none; }
+
+/* ── Scrollbar ── */
+.papers-list::-webkit-scrollbar { width: 4px; }
+.papers-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* ── Humanize Options ── */
+.humanize-options {
+  display: none;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(139,92,246,0.08);
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+}
+
+.humanize-options.visible { display: flex; flex-wrap: wrap; }
+
+.humanize-options label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sidebar);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.humanize-options select {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-sidebar);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: var(--font-main);
+  cursor: pointer;
+}
+
+.humanize-options select option {
+  background: var(--bg-sidebar);
+  color: var(--text-sidebar);
+}
+
+/* Humanize warning banner */
+.humanize-warning {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="icon">🔬</span>
+      <h1>ResearchAI</h1>
+      <p>Your Academic Paper Assistant</p>
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="login-username" placeholder="Enter your username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>PIN</label>
+      <input type="password" id="login-pin" placeholder="••••" maxlength="6" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="login-btn">Sign In</button>
+    <div class="login-error" id="login-error">Invalid username or PIN. Please try again.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>🔬 ResearchAI</h2>
+      <p>Academic Paper Assistant</p>
+    </div>
+
+    <!-- Library section -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">📚 Paper Library</div>
+      <div id="admin-upload" class="admin-section">
+        <label class="btn-upload" for="pdf-input">
+          <span>＋</span> Upload PDF
+        </label>
+        <input type="file" id="pdf-input" accept=".pdf" style="display:none" multiple>
+        <div class="upload-progress" id="upload-progress">
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+          <div class="progress-label" id="progress-label">Uploading...</div>
+        </div>
+      </div>
+      <div class="papers-list" id="papers-list">
+        <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">
+          No papers yet
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode selector -->
+    <div class="sidebar-section" style="flex:1;overflow-y:auto;">
+      <div class="sidebar-section-title">⚙️ Chat Mode</div>
+      <div class="mode-list" id="mode-list">
+        <div class="mode-item active" data-mode="qa">
+          <span class="mode-icon">💬</span> Q&A
+        </div>
+        <div class="mode-item" data-mode="retrieval">
+          <span class="mode-icon">📄</span> Direct Retrieval
+        </div>
+        <div class="mode-item" data-mode="patterns">
+          <span class="mode-icon">🔍</span> Find Patterns
+        </div>
+        <div class="mode-item" data-mode="common">
+          <span class="mode-icon">🔗</span> Common Points
+        </div>
+        <div class="mode-item" data-mode="draft">
+          <span class="mode-icon">✍️</span> Draft Section
+        </div>
+        <div class="mode-item" data-mode="gaps">
+          <span class="mode-icon">🎯</span> Find Gaps
+        </div>
+        <div class="mode-item" data-mode="humanize">
+          <span class="mode-icon">✨</span> Humanize Text
+        </div>
+      </div>
+      <div class="humanize-options" id="humanize-options">
+        <label>Strength:
+          <select id="humanize-strength">
+            <option value="light">Light</option>
+            <option value="medium" selected>Medium</option>
+            <option value="strong">Strong</option>
+          </select>
+        </label>
+        <label>Tone:
+          <select id="humanize-tone">
+            <option value="academic" selected>Academic</option>
+            <option value="neutral">Neutral</option>
+            <option value="conversational">Conversational</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- Admin tools -->
+    <div class="sidebar-section admin-section" id="admin-tools">
+      <div class="sidebar-section-title">🛠️ Admin Tools</div>
+      <button class="btn-reingest" id="reingest-btn">♻️ Re-index All Papers</button>
+    </div>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div>
+          <div class="user-name" id="user-display-name">User</div>
+          <div class="user-role" id="user-role-badge">researcher</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="logout-btn" title="Logout">⏻</button>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="chat-area">
+    <div class="chat-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+        <div class="chat-header-left">
+          <h3 id="chat-mode-title">Q&A Mode</h3>
+          <p id="chat-mode-desc">Ask questions about your uploaded papers</p>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <button class="btn-action" id="export-btn">📥 Export</button>
+        <button class="btn-action" id="clear-btn">🗑️ Clear Chat</button>
+      </div>
+    </div>
+
+    <div class="messages-area" id="messages-area">
+      <div class="welcome" id="welcome-screen">
+        <span class="welcome-icon">🔬</span>
+        <h3>Welcome to ResearchAI</h3>
+        <p>Upload your research papers in the sidebar, select a mode, and start asking questions. The AI will answer using only your uploaded papers with full citations.</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea
+          id="chat-input"
+          placeholder="Ask a question about your papers..."
+          rows="1"
+        ></textarea>
+        <button class="btn-send" id="send-btn">↑</button>
+      </div>
+      <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+const state = {
+  user: null,
+  papers: [],
+  activePaperIds: [],
+  currentMode: 'qa',
+  isStreaming: false,
+  lastMode: 'qa',
+  lastTopic: '',
+  partNum: 1
+};
+
+const MODES = {
+  qa:        { title: 'Q&A Mode',            desc: 'Ask questions about your uploaded papers' },
+  retrieval: { title: 'Direct Retrieval',    desc: 'Retrieve exact sections from papers' },
+  patterns:  { title: 'Pattern Analysis',    desc: 'Find recurring patterns across papers' },
+  common:    { title: 'Common Points',       desc: 'Find what all papers agree on' },
+  draft:     { title: 'Draft a Section',     desc: 'Write academic sections from your papers' },
+  gaps:      { title: 'Research Gap Finder', desc: 'Identify gaps in the literature' },
+  humanize:  { title: 'Humanize Text',      desc: 'Paste text to rewrite in a natural human voice' }
+};
+
+// ── Utilities ─────────────────────────────────────────────────
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+function renderLiveMarkdown(container, markdownText, streaming = false) {
+  let html = marked.parse(markdownText);
+  html = html.replace(/\[([a-zA-Z0-9_\-\.]+\.pdf[^\]]*)\]/g, '<span class="inline-citation">[$1]</span>');
+  container.innerHTML = html + (streaming ? '<span class="stream-cursor"></span>' : '');
+  if (window.renderMathInElement) {
+    try {
+      renderMathInElement(container, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false }
+        ],
+        throwOnError: false
+      });
+    } catch (e) {}
+  }
+}
+
+function showToast(msg, type = 'info', duration = 3000) {
+  const icons = { success: '✓', error: '✗', warning: '⚠', info: 'ℹ' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  if (duration > 0) setTimeout(() => el.remove(), duration);
+  return el;
+}
+
+function formatTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+}
+
+function scrollToBottom() {
+  const area = document.getElementById('messages-area');
+  area.scrollTop = area.scrollHeight;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    ...options
+  });
+  if (res.status === 401) {
+    handleLogout();
+    throw new Error('Session expired');
+  }
+  return res;
+}
+
+// ── Auth ──────────────────────────────────────────────────────
+async function checkSession() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const user = await res.json();
+      loginSuccess(user);
+    }
+  } catch {}
+}
+
+function loginSuccess(user) {
+  state.user = user;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-display-name').textContent = user.display_name;
+  document.getElementById('user-role-badge').textContent = user.role;
+  document.getElementById('user-avatar').textContent = user.display_name[0].toUpperCase();
+
+  if (user.role === 'admin') {
+    document.querySelectorAll('.admin-section').forEach(el => el.classList.add('visible'));
+  }
+  loadPapers();
+}
+
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const username = document.getElementById('login-username').value.trim();
+  const pin = document.getElementById('login-pin').value.trim();
+  if (!username || !pin) return;
+
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username, pin })
+    });
+    if (res.ok) {
+      const user = await res.json();
+      loginSuccess(user);
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+      btn.textContent = 'Sign In';
+      btn.disabled = false;
+    }
+  } catch {
+    btn.textContent = 'Sign In';
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('login-pin').addEventListener('keypress', e => {
+  if (e.key === 'Enter') document.getElementById('login-btn').click();
+});
+
+async function handleLogout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  location.reload();
+}
+
+document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+// ── Papers ────────────────────────────────────────────────────
+async function loadPapers() {
+  try {
+    const res = await api('/papers');
+    state.papers = await res.json();
+    state.activePaperIds = state.papers.filter(p => p.active).map(p => p.paper_id);
+    renderPapers();
+  } catch {}
+}
+
+function renderPapers() {
+  const list = document.getElementById('papers-list');
+  if (!state.papers.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">No papers yet</div>';
+    return;
+  }
+  list.innerHTML = state.papers.map(p => `
+    <div class="paper-item" data-id="${p.paper_id}">
+      <div class="paper-toggle ${p.active ? 'active' : ''}" onclick="togglePaper('${p.paper_id}')" title="${p.active ? 'Active' : 'Inactive'}"></div>
+      <div class="paper-name" title="${p.filename}">📄 ${p.filename}</div>
+      ${state.user?.role === 'admin' ? `<button class="paper-delete" onclick="deletePaper('${p.paper_id}')" title="Delete">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+
+async function togglePaper(paperId) {
+  try {
+    const res = await api(`/papers/${paperId}/toggle`, { method: 'PATCH' });
+    const data = await res.json();
+    const paper = state.papers.find(p => p.paper_id === paperId);
+    if (paper) paper.active = data.active;
+    state.activePaperIds = state.papers.filter(p => p.active).map(p => p.paper_id);
+    renderPapers();
+  } catch {}
+}
+
+async function deletePaper(paperId) {
+  if (!confirm('Delete this paper and its index?')) return;
+  try {
+    await api(`/papers/${paperId}`, { method: 'DELETE' });
+    state.papers = state.papers.filter(p => p.paper_id !== paperId);
+    state.activePaperIds = state.papers.filter(p => p.active).map(p => p.paper_id);
+    renderPapers();
+    showToast('Paper deleted', 'success');
+  } catch {
+    showToast('Failed to delete paper', 'error');
+  }
+}
+
+// File upload
+document.getElementById('pdf-input').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+
+  const progress = document.getElementById('upload-progress');
+  const fill = document.getElementById('progress-fill');
+  const label = document.getElementById('progress-label');
+  progress.style.display = 'block';
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    label.textContent = `Uploading ${file.name}...`;
+    fill.style.width = `${(i / files.length) * 100}%`;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/papers/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`${file.name} indexed (${data.chunks_stored} chunks)`, 'success');
+      } else {
+        const err = await res.json();
+        showToast(`Failed: ${err.detail}`, 'error', 0);
+      }
+    } catch {
+      showToast(`Upload failed for ${file.name}`, 'error');
+    }
+  }
+
+  fill.style.width = '100%';
+  label.textContent = 'Complete!';
+  setTimeout(() => { progress.style.display = 'none'; }, 2000);
+  e.target.value = '';
+  loadPapers();
+});
+
+// Re-ingest
+document.getElementById('reingest-btn').addEventListener('click', async () => {
+  if (!confirm('Re-index all papers? This may take a few minutes.')) return;
+  const toast = showToast('Re-indexing all papers...', 'warning', 0);
+  try {
+    const res = await api('/admin/reingest', { method: 'POST' });
+    const data = await res.json();
+    toast.remove();
+    showToast(`Re-indexed ${data.results.length} papers`, 'success');
+  } catch {
+    toast.remove();
+    showToast('Re-index failed', 'error');
+  }
+});
+
+// ── Mode Selector ─────────────────────────────────────────────
+document.getElementById('mode-list').addEventListener('click', (e) => {
+  const item = e.target.closest('.mode-item');
+  if (!item) return;
+  const mode = item.dataset.mode;
+  state.currentMode = mode;
+  document.querySelectorAll('.mode-item').forEach(el => el.classList.remove('active'));
+  item.classList.add('active');
+  document.getElementById('chat-mode-title').textContent = MODES[mode].title;
+  document.getElementById('chat-mode-desc').textContent = MODES[mode].desc;
+  document.getElementById('chat-input').placeholder = MODES[mode].desc + '...';
+
+  // Toggle humanize options panel
+  const humanizePanel = document.getElementById('humanize-options');
+  if (mode === 'humanize') {
+    humanizePanel.classList.add('visible');
+  } else {
+    humanizePanel.classList.remove('visible');
+  }
+});
+
+// ── Chat ──────────────────────────────────────────────────────
+function addUserMessage(text) {
+  document.getElementById('welcome-screen')?.remove();
+  const area = document.getElementById('messages-area');
+  const div = document.createElement('div');
+  div.className = 'message-user';
+  div.innerHTML = `
+    <div class="message-user-bubble">
+      <p>${text.replace(/\n/g, '<br>')}</p>
+      <div class="message-meta">${state.user?.display_name} · ${formatTime()}</div>
+    </div>
+  `;
+  area.appendChild(div);
+  scrollToBottom();
+}
+
+function addTypingIndicator() {
+  document.getElementById('welcome-screen')?.remove();
+  const area = document.getElementById('messages-area');
+  const div = document.createElement('div');
+  div.className = 'typing-indicator';
+  div.id = 'typing-indicator';
+  div.innerHTML = `
+    <div class="ai-avatar">🔬</div>
+    <div class="typing-dots">
+      <span></span><span></span><span></span>
+    </div>
+  `;
+  area.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+function createAIMessageShell(mode) {
+  const area = document.getElementById('messages-area');
+  const div = document.createElement('div');
+  div.className = 'message-ai';
+  div.innerHTML = `
+    <div class="ai-avatar">🔬</div>
+    <div class="ai-content">
+      <div class="ai-header">
+        <span class="ai-name">ResearchAI</span>
+        <span class="ai-mode-badge">${MODES[mode]?.title || mode}</span>
+        <span class="ai-time">${formatTime()}</span>
+      </div>
+      <div class="thinking-panel" style="display:none;">
+        <div class="thinking-header" onclick="toggleThinking(this)">
+          <span class="thinking-toggle">▶</span>
+          <span>🧠 Reasoning</span>
+          <span class="thinking-pulse"></span>
+          <span class="thinking-preview" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:4px;color:#818cf8;font-style:italic;font-size:11px;"></span>
+        </div>
+        <div class="thinking-body"></div>
+      </div>
+      <div class="answer-body"></div>
+      <div class="citations-container"></div>
+      <div class="message-actions" style="display:none;">
+        <button class="btn-msg-action btn-copy" onclick="copyMessage(this)">📋 Copy</button>
+        <button class="btn-msg-action btn-copy-md" onclick="copyMarkdown(this)">📋 Markdown</button>
+        <button class="btn-msg-action btn-humanize" onclick="humanizeMessage(this)" style="display:none;">✨ Humanize</button>
+      </div>
+    </div>
+  `;
+  area.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+let currentReasoningText = '';
+let currentContentText = '';
+
+function toggleThinking(headerEl) {
+  const panel = headerEl.closest('.thinking-panel');
+  const body = panel.querySelector('.thinking-body');
+  const toggle = panel.querySelector('.thinking-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+async function sendMessage(message, isContinuation = false, continuationMeta = null, modeOverride = null) {
+  if (state.isStreaming) return;
+  if (!message.trim()) return;
+
+  const effectiveMode = modeOverride || state.currentMode;
+
+  // Skip paper check for humanize mode
+  if (effectiveMode !== 'humanize' && state.activePaperIds.length === 0) {
+    showToast('Please activate at least one paper', 'warning');
+    return;
+  }
+
+  // Short text check for humanize
+  if (effectiveMode === 'humanize' && message.trim().split(/\s+/).length < 20) {
+    showToast('Paste at least a paragraph (20+ words) to humanize', 'warning');
+    return;
+  }
+
+  state.isStreaming = true;
+  currentReasoningText = '';
+  currentContentText = '';
+
+  const sendBtn = document.getElementById('send-btn');
+  const input = document.getElementById('chat-input');
+  sendBtn.disabled = true;
+  input.disabled = true;
+
+  if (!isContinuation) addUserMessage(message);
+
+  const typingEl = addTypingIndicator();
+
+  // Build payload
+  const payload = {
+    message,
+    mode: effectiveMode,
+    active_paper_ids: state.activePaperIds,
+    continuation_meta: continuationMeta
+  };
+
+  // Include humanize options when in humanize mode
+  if (effectiveMode === 'humanize') {
+    payload.humanize_options = {
+      strength: document.getElementById('humanize-strength').value,
+      tone: document.getElementById('humanize-tone').value
+    };
+  }
+
+  try {
+    const res = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      typingEl.remove();
+      const err = await res.json();
+      showToast(err.detail || 'Request failed', 'error');
+      return;
+    }
+
+    typingEl.remove();
+    const msgEl = createAIMessageShell(effectiveMode);
+    const answerBody = msgEl.querySelector('.answer-body');
+    const thinkingPanel = msgEl.querySelector('.thinking-panel');
+    const thinkingBody = msgEl.querySelector('.thinking-body');
+    const thinkingPreview = msgEl.querySelector('.thinking-preview');
+    const thinkingPulse = msgEl.querySelector('.thinking-pulse');
+
+    // Add streaming cursor
+    answerBody.innerHTML = '<span class="stream-cursor"></span>';
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      let currentEvent = null;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith('data: ')) {
+          if (!currentEvent) currentEvent = 'message';
+          try {
+            const data = JSON.parse(line.slice(6));
+
+            if (currentEvent === 'reasoning') {
+              currentReasoningText += data.text;
+              thinkingPanel.style.display = 'block';
+              thinkingBody.textContent = currentReasoningText;
+              thinkingPreview.textContent = currentReasoningText.slice(0, 80) + '...';
+              scrollToBottom();
+            }
+
+            else if (currentEvent === 'content') {
+              currentContentText += data.text;
+              thinkingPulse.style.display = 'none';
+              // Render markdown & LaTeX live without stuttering
+              renderLiveMarkdown(answerBody, currentContentText, true);
+              scrollToBottom();
+            }
+
+            else if (currentEvent === 'done') {
+              // Final render without cursor
+              renderLiveMarkdown(answerBody, currentContentText, false);
+
+              // Store raw text on the message element for per-message copy/humanize
+              msgEl.dataset.raw = currentContentText;
+
+              // Render citations
+              if (data.citations?.length) {
+                const citEl = msgEl.querySelector('.citations-container');
+                citEl.innerHTML = `
+                  <div class="citations-block">
+                    <div class="citations-title">📎 Sources Used</div>
+                    ${data.citations.map((c, i) => `
+                      <div class="citation-item">
+                        <span>[${i+1}]</span>
+                        <span>${c.filename} — p.${c.page_num} — §${c.section_name}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                `;
+              }
+
+              // Show citation warning if present
+              if (data.warning) {
+                const warnEl = document.createElement('div');
+                warnEl.className = 'humanize-warning';
+                warnEl.innerHTML = `<span>⚠️</span><span>${data.warning}</span>`;
+                msgEl.querySelector('.ai-content').appendChild(warnEl);
+              }
+
+              // Show message actions
+              const actionsEl = msgEl.querySelector('.message-actions');
+              actionsEl.style.display = 'flex';
+
+              // Show humanize button on non-humanize AI replies
+              if (effectiveMode !== 'humanize') {
+                const humanizeBtn = actionsEl.querySelector('.btn-humanize');
+                humanizeBtn.style.display = 'inline-flex';
+              }
+
+              // Check for continue prompt
+              if (currentContentText.includes('⏭️ CONTINUE PROMPT')) {
+                const continueMatch = currentContentText.match(/CONTINUE PROMPT.*?"([^"]+)"/);
+                const topic = continueMatch ? continueMatch[1] : message;
+                state.lastTopic = topic;
+                state.partNum++;
+
+                const continueEl = document.createElement('div');
+                continueEl.className = 'continue-block';
+                continueEl.innerHTML = `
+                  <span class="continue-text">⚠️ Answer continues — this is Part ${state.partNum - 1}</span>
+                  <button class="btn-continue" onclick="handleContinue('${topic.replace(/'/g, "\\'")}')">
+                    ▶ Continue Answer
+                  </button>
+                `;
+                msgEl.querySelector('.ai-content').appendChild(continueEl);
+              }
+
+              scrollToBottom();
+            }
+
+            else if (currentEvent === 'error') {
+              answerBody.innerHTML = `<span style="color:var(--error)">Error: ${data.message}</span>`;
+            }
+
+          } catch {}
+          currentEvent = null;
+        }
+      }
+    }
+
+  } catch (err) {
+    typingEl?.remove();
+    showToast('Connection error. Please try again.', 'error');
+  } finally {
+    state.isStreaming = false;
+    sendBtn.disabled = false;
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+function handleContinue(topic) {
+  sendMessage(`continue ${topic}`, true, {
+    topic,
+    last_section: '',
+    original_mode: state.currentMode,
+    part_num: state.partNum
+  });
+}
+
+function copyMessage(btn) {
+  const msgEl = btn.closest('.message-ai');
+  const raw = msgEl?.dataset.raw || currentContentText;
+  navigator.clipboard.writeText(raw);
+  showToast('Copied to clipboard', 'success');
+}
+
+function copyMarkdown(btn) {
+  const msgEl = btn.closest('.message-ai');
+  const raw = msgEl?.dataset.raw || currentContentText;
+  navigator.clipboard.writeText(raw);
+  showToast('Markdown copied', 'success');
+}
+
+function cleanForHumanize(text) {
+  // Strip scaffolding sections that shouldn't be humanized
+  let cleaned = text;
+  // Remove ── References Used ── block and everything after it
+  cleaned = cleaned.replace(/──\s*References Used\s*──[\s\S]*/i, '');
+  // Remove CONTINUE PROMPT lines
+  cleaned = cleaned.replace(/⏭️\s*CONTINUE PROMPT.*$/gm, '');
+  // Remove section labels like DIRECT ANSWER:, DETAILED EXPLANATION:, etc.
+  cleaned = cleaned.replace(/^(DIRECT ANSWER|DETAILED EXPLANATION|SUPPORTING EVIDENCE|IMPLICATIONS FOR YOUR RESEARCH|SYNTHESIS|DRAFT NOTES):?\s*$/gm, '');
+  return cleaned.trim();
+}
+
+function humanizeMessage(btn) {
+  const msgEl = btn.closest('.message-ai');
+  const raw = msgEl?.dataset.raw || '';
+  if (!raw) {
+    showToast('No text to humanize', 'warning');
+    return;
+  }
+  const cleaned = cleanForHumanize(raw);
+  if (cleaned.split(/\s+/).length < 20) {
+    showToast('Text too short to humanize', 'warning');
+    return;
+  }
+  sendMessage(cleaned, false, null, 'humanize');
+}
+
+// ── Input Handling ────────────────────────────────────────────
+const chatInput = document.getElementById('chat-input');
+
+chatInput.addEventListener('input', () => autoResizeTextarea(chatInput));
+
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const msg = chatInput.value.trim();
+    if (msg) {
+      chatInput.value = '';
+      autoResizeTextarea(chatInput);
+      sendMessage(msg);
+    }
+  }
+});
+
+document.getElementById('send-btn').addEventListener('click', () => {
+  const msg = chatInput.value.trim();
+  if (msg) {
+    chatInput.value = '';
+    autoResizeTextarea(chatInput);
+    sendMessage(msg);
+  }
+});
+
+// ── Header Actions ────────────────────────────────────────────
+document.getElementById('clear-btn').addEventListener('click', async () => {
+  if (!confirm('Clear your chat history?')) return;
+  await api('/chat/clear', { method: 'POST' });
+  document.getElementById('messages-area').innerHTML = `
+    <div class="welcome" id="welcome-screen">
+      <span class="welcome-icon">🔬</span>
+      <h3>Welcome to ResearchAI</h3>
+      <p>Upload your research papers in the sidebar, select a mode, and start asking questions.</p>
+    </div>
+  `;
+  showToast('Chat cleared', 'success');
+});
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  window.location.href = '/chat/export';
+});
+
+// ── Mobile Menu ───────────────────────────────────────────────
+document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+// ── Init ──────────────────────────────────────────────────────
+checkSession();
+</script>
+</body>
+</html>

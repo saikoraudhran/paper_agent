@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-multipart
+pymupdf
+chromadb
+openai
+python-dotenv
+tiktoken
+itsdangerous
+httpx
+sse-starlette
+aiofiles
+
